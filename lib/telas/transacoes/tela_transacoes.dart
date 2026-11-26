@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-import '../../dados/dados_exemplo.dart';
+import '../../dados/dados_iniciais.dart';
 import '../../modelos/transacao.dart';
+import '../../services/controle_global.dart';
 import '../../widgets/cartao_resumo.dart';
 import '../../telas/adicionar/tela_adicionar.dart';
+import '../../tema.dart';
 
 enum Filtro { todos, receitas, despesas }
 
 //formator de moeda, seguindo regra brasileira: ponto no milhar e virgula nos centavos
 final _formatoMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+final _formatoData = DateFormat('dd/MM/yyyy');
 
 class TelaTransacoes extends StatefulWidget {
   const TelaTransacoes({super.key});
@@ -23,29 +25,52 @@ class _TelaTransacoesState extends State<TelaTransacoes> {
   Filtro _filtro = Filtro.todos;
   String _busca = '';
 
-  //entrada: soma dos valores positivos
-  double get _entradas => transacoes
-      .where((t) => t.valor > 0)
-      .fold(0.0, (soma, t) => soma + t.valor);
+  // Monta a lista de exibição a partir dos dados do parceiro.
+  // O Gasto dele é positivo, então aqui viramos NEGATIVO (-g.valor):
+  // assim o filtro e as cores (valor < 0 = despesa) continuam iguais.
+  List<Transacao> get _todas {
+    final lista = <Transacao>[
+      for (final g in controle.gastos)
+        Transacao(
+          g.descricao,
+          g.categoria.nome,
+          -g.valor,
+          iconesCategoria[g.categoria.nome] ?? Icons.category,
+          g.data,
+        ),
+      for (final r in controle.receitas)
+        Transacao(
+          r.descricao,
+          'Receita',
+          r.valor,
+          Icons.account_balance_wallet,
+          r.data,
+        ),
+    ];
 
-  //saida: soma dos valores negativos
-  double get _saidas => transacoes
-      .where((t) => t.valor < 0)
-      .fold(0.0, (soma, t) => soma + t.valor.abs());
+    // Mais recente primeiro. compareTo(b, a) inverte a ordem.
+    lista.sort((a, b) => b.data.compareTo(a.data));
+    return lista;
+  }
 
-  //.length mostra quantos itens sobraram depois do filtro
-  int get _qtdReceitas => transacoes.where((t) => t.valor > 0).length;
-  int get _qtdDespesas => transacoes.where((t) => t.valor < 0).length;
+  double get _entradas {
+    final agora = DateTime.now();
+    return controle.calcularReceitasPorMes(agora.month, agora.year);
+  }
+
+  double get _saidas {
+    final agora = DateTime.now();
+    return controle.calcularGastosPorMes(agora.month, agora.year);
+  }
 
   List<Transacao> get _visiveis {
-    return transacoes.where((t) {
+    return _todas.where((t) {
       final passaNoFiltro = switch (_filtro) {
         Filtro.todos => true,
         Filtro.receitas => t.valor > 0,
         Filtro.despesas => t.valor < 0,
       };
       final passaNaBusca = t.nome.toLowerCase().contains(_busca.toLowerCase());
-      //O item só aparece se passar nas duas condiçoes
       return passaNoFiltro && passaNaBusca;
     }).toList();
   }
@@ -53,15 +78,13 @@ class _TelaTransacoesState extends State<TelaTransacoes> {
   String _moeda(double v) => _formatoMoeda.format(v.abs());
 
   Future<void> _abrirAdicionar() async {
-    final nova = await Navigator.push<Transacao>(
+    await Navigator.push(
       context,
       //animação padrao de trocar de tela, builder é a função que constroi a tela que será aberta
       MaterialPageRoute(builder: (context) => const TelaAdicionar()),
     );
-    if (nova != null && mounted) {
-      setState(() {
-        transacoes.insert(0, nova); //insert 0 coloca no INICIO da lista
-      });
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -87,7 +110,7 @@ class _TelaTransacoesState extends State<TelaTransacoes> {
     final textos = Theme.of(context).textTheme;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       children: [
         //Cabecalho com o botao + (Row é lado a lado)
         Row(
@@ -103,7 +126,7 @@ class _TelaTransacoesState extends State<TelaTransacoes> {
                       //copywith pega o estilo do tema e muda só o que voce pedir
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F7B6C),
+                      color: Cores.verde,
                     ),
                   ),
                   Text(
@@ -141,28 +164,25 @@ class _TelaTransacoesState extends State<TelaTransacoes> {
           icone: Icons.arrow_downward,
           titulo: 'Entrada do mês',
           valor: _moeda(_entradas),
-          observacao: '$_qtdReceitas receita(s)',
-          cor: Color(0xFF0F7B6C),
-          corFundo: Color(0xFFE3F3EF),
-          corObservacao: Color(0xFF0F7B6C),
+          observacao: '${controle.receitas.length} receita(s)',
+          cor: Colors.green.shade800,
+          corFundo: Colors.green.shade50,
         ),
         CartaoResumo(
           icone: Icons.arrow_upward,
           titulo: 'Saídas no mês',
           valor: _moeda(_saidas),
-          observacao: '$_qtdDespesas despesa(s)',
-          cor: Color(0xFFB71C1C),
-          corFundo: Color(0xFFFDEDE7),
-          corObservacao: Color(0xFFB71C1C),
+          observacao: '${controle.gastos.length} despesa(s)',
+          cor: Colors.red.shade800,
+          corFundo: Colors.red.shade50,
         ),
         CartaoResumo(
           icone: Icons.swap_horiz,
           titulo: 'Total de lançamentos',
-          valor: '${transacoes.length}',
+          valor: '${_todas.length}',
           observacao: 'transações registradas',
-          cor: Color(0xFF3F51B5),
-          corFundo: Color(0xFFEEF0FD),
-          corObservacao: Color(0xFF3F51B5),
+          cor: Colors.indigo.shade700,
+          corFundo: Colors.indigo.shade50,
         ),
         const SizedBox(height: 16),
 

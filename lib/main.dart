@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 
+import 'screens/login_screen.dart';
 import 'tema.dart';
-import './app_shell.dart';
+import 'dados/dados_iniciais.dart';
 
 //Liga o app, o tema e a primeira tela
 void main() {
+  carregarDadosIniciais();
   runApp(const ControleFinanceiro());
 }
 
 class ControleFinanceiro extends StatelessWidget {
   const ControleFinanceiro({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, //tira a faixa DEBUG do canto
+      debugShowCheckedModeBanner: false,
+      title: 'Finora', //tira a faixa DEBUG do canto
       theme: criacaoTema(),
       builder: (context, child) {
         return ColoredBox(
@@ -26,7 +30,7 @@ class ControleFinanceiro extends StatelessWidget {
           ),
         );
       },
-      home: const AppShell(),
+      home: const LoginScreen(),
     );
   }
 }

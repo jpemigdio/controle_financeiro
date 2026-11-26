@@ -6,6 +6,7 @@ class Transacao {
   final String categoria;
   final double valor;
   final IconData icone;
+  final DateTime data;
 
-  const Transacao(this.nome, this.categoria, this.valor, this.icone);
+  const Transacao(this.nome, this.categoria, this.valor, this.icone, this.data);
 }

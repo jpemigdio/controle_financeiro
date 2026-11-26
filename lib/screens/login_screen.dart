@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'cadastro_screen.dart';
-import 'dashboard_screen.dart';
+import '../app_shell.dart';
 import '../services/controle_global.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DashboardScreen(),
+                    builder: (context) => AppShell(),
                   ),
                 );
               }
@@ -221,7 +222,7 @@ Widget build(BuildContext context) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => CadastroScreen(),
+                                      builder: (context) => const AppShell(),
                                     ),
                                   );
                                 },

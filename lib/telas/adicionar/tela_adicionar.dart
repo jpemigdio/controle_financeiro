@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../modelos/transacao.dart';
+import '../../models/gasto.dart';
+import '../../models/receita.dart';
+import '../../services/controle_global.dart';
 
 //enum =  lista de opções fixas. os dois tipos possiveis
 enum Tipo { despesa, receita }
-
-const categorias = {
-  'Alimentação': Icons.restaurant,
-  'Transporte': Icons.directions_car,
-  'Moradia': Icons.home,
-  'Saúde': Icons.favorite,
-  'Lazer': Icons.movie,
-  'Receita': Icons.account_balance_wallet,
-};
 
 class TelaAdicionar extends StatefulWidget {
   const TelaAdicionar({super.key});
@@ -24,17 +17,17 @@ class TelaAdicionar extends StatefulWidget {
 class _TelaAdicionarState extends State<TelaAdicionar> {
   //GlobalKey é uma "etiqueta" que identifica o formulário
   final _formKey = GlobalKey<FormState>();
-
   final _nomeController = TextEditingController(); //guarda o texto de um campo
   final _valorController = TextEditingController();
 
   //estado da tela, valores iniciais: abre como despesa, na categoria alimentação
   Tipo _tipo = Tipo.despesa;
-  String _categoria = 'Alimentação';
+  String _categoria = controle.categorias.first.nome;
 
   @override
   void dispose() {
-    _nomeController.dispose(); //controllers precisam ser liberados, senao ocupam espaço
+    _nomeController
+        .dispose(); //controllers precisam ser liberados, senao ocupam espaço
     _valorController.dispose(); //de memória depois que a tela some
     super.dispose();
   }
@@ -42,20 +35,19 @@ class _TelaAdicionarState extends State<TelaAdicionar> {
   //metodo para quando o usuario tocar em "Salvar transação"
   void salvar() {
     //validate executa todos os campos do formulário, devolve false tiver algum erro
-    if (!_formKey.currentState!.validate())
-      return; // o ! diz "garante que não é null"
-    final valorDigitado = double.parse(
-      _valorController.text.replaceAll(',', '.'),
-    );
-    final valor = _tipo == Tipo.despesa ? -valorDigitado : valorDigitado; //regra, despesa guarda valor negativo e receita positivo
-    final nova = Transacao(
-      //segue construtor de Transacao
-      _nomeController.text.trim(), //trim() remove espaços do começo e do fim
-      _categoria,
-      valor,
-      categorias[_categoria]!,
-    );
-    Navigator.pop(context, nova); //pop fecha a tela e volta para a anterior
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    final valor = double.parse(_valorController.text.replaceAll(',', '.'));
+    final descricao = _nomeController.text.trim();
+    final agora = DateTime.now();
+    if (_tipo == Tipo.despesa) {
+      final categoria = controle.buscarCategoria(_categoria)!;
+      controle.adicionarGasto(Gasto(descricao, valor, categoria, agora));
+    } else {
+      controle.adicionarReceita(Receita(descricao, valor, agora));
+    }
+    Navigator.pop(context, true); //pop fecha a tela e volta para a anterior
     //(nova) é o valor devolvido para quem abriu a tela
   }
 
@@ -128,31 +120,36 @@ class _TelaAdicionarState extends State<TelaAdicionar> {
               ),
               const SizedBox(height: 16),
 
-              //CATEGORIA
-              //<String> porque cada item do menu é um texto
-              DropdownButtonFormField<String>(
-                initialValue: _categoria,
-                decoration: const InputDecoration(
-                  labelText: 'Categoria',
-                  border: OutlineInputBorder(),
+              // A categoria só aparece para DESPESA (receita não tem).
+              // "if ... ...[ ]" dentro da lista inclui os widgets só quando
+              // a condição é verdadeira.
+              if (_tipo == Tipo.despesa) ...[
+                DropdownButtonFormField<String>(
+                  initialValue: _categoria,
+                  decoration: const InputDecoration(
+                    labelText: 'Categoria',
+                    border: OutlineInputBorder(),
+                  ),
+                  // Um item para cada categoria registrada no controle
+                  items: controle.categorias.map((categoria) {
+                    return DropdownMenuItem(
+                      value: categoria.nome,
+                      child: Text(categoria.nome),
+                    );
+                  }).toList(),
+                  onChanged: (String? novaCategoria) {
+                    if (novaCategoria == null) {
+                      return;
+                    }
+                    setState(() {
+                      _categoria = novaCategoria;
+                    });
+                  },
                 ),
-                //monta a lista de itens a partir das chaves do map
-                //para cada nome cria um item do menu
-                items: categorias.keys.map((String nome) {
-                  return DropdownMenuItem(value: nome, child: Text(nome));
-                }).toList(),
-                //chamado quando a pessoa escolhe outro item
-                //string? porque o flutter pode mandar null
-                onChanged: (String? novaCategoria) {
-                  if (novaCategoria == null) return;
-                  setState(() {
-                    _categoria = novaCategoria;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 16),
+              ],
 
-              //botao para salvar
+              const SizedBox(height: 8),
               FilledButton(
                 onPressed: salvar,
                 child: const Text('Salvar transação'),

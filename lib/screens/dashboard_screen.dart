@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/card_orcamento.dart';
 import '../services/controle_global.dart';
 import 'package:intl/intl.dart';
-import 'login_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen ({super.key});
@@ -51,36 +51,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final ultimasMovimentacoes = movimentacoes.take(5).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        toolbarHeight: 65,
-        title: Text(
-          'Finora',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF176B3A),
-            fontSize: 23
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.logout,
-              color: Color(0xFF176B3A),
-            ),
-            tooltip: 'Sair',
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LoginScreen(),
-                )
-              );
-            },
-          ),
-        ],
-      ),
-
       body: SingleChildScrollView( // permite rolar a tela
         child: Padding(
           padding: EdgeInsets.all(20),

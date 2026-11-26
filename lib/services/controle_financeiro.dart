@@ -1,4 +1,5 @@
 import 'package:controle_financeiro/models/receita.dart';
+
 import '../models/gasto.dart';
 import '../models/cofrinho.dart';
 import '../models/categoria.dart';
@@ -38,7 +39,6 @@ class ControleFinanceiro {
   }
 
   double calcularTotalReceitas() {
-
     double total = 0;
 
     for (Receita receita in receitas) {
@@ -49,7 +49,7 @@ class ControleFinanceiro {
   }
 
   double calcularSaldo() {
-    return calcularTotalReceitas() - calcularTotal();
+    return calcularTotalReceitas() - calcularTotal() - calcularTotalCofrinhos();
   }
 
   void adicionarCofrinho(Cofrinho cofrinho) {
@@ -61,14 +61,12 @@ class ControleFinanceiro {
   }
 
   double calcularTotalCofrinhos() {
-
     double totalcofrinhos = 0;
 
     for (Cofrinho cofrinho in cofrinhos) {
       totalcofrinhos += cofrinho.valorGuardado;
-      
     }
-    
+
     return totalcofrinhos;
   }
 
@@ -81,11 +79,10 @@ class ControleFinanceiro {
   }
 
   double calcularGastosPorCategoria(Categoria categoria) {
-
     double valortotal = 0;
 
     for (Gasto gasto in gastos) {
-      if(gasto.categoria == categoria) {
+      if (gasto.categoria == categoria) {
         valortotal += gasto.valor;
       }
     }
@@ -94,7 +91,6 @@ class ControleFinanceiro {
   }
 
   Categoria? buscarCategoria(String nome) {
-
     for (Categoria categoria in categorias) {
       if (categoria.nome == nome) {
         return categoria;
@@ -117,7 +113,6 @@ class ControleFinanceiro {
   }
 
   double calcularGastosPorMes(int mes, int ano) {
-
     double total = 0;
 
     for (Gasto gasto in gastos) {
@@ -130,7 +125,6 @@ class ControleFinanceiro {
   }
 
   double calcularReceitasPorMes(int mes, int ano) {
-
     double total = 0;
 
     for (Receita receita in receitas) {
@@ -143,18 +137,18 @@ class ControleFinanceiro {
   }
 
   double calcularSaldoPorMes(int mes, int ano) {
-    return calcularReceitasPorMes(mes, ano) - calcularGastosPorMes(mes, ano); 
+    return calcularReceitasPorMes(mes, ano) - calcularGastosPorMes(mes, ano);
   }
 
   double calcularGastoOrcamento(Orcamento orcamento) {
     double total = 0;
 
-    for(Gasto gasto in gastos) {
-      if(gasto.categoria == orcamento.categoria &&
-         gasto.data.month == orcamento.mes &&
-         gasto.data.year == orcamento.ano) {
-          total += gasto.valor;
-         }
+    for (Gasto gasto in gastos) {
+      if (gasto.categoria == orcamento.categoria &&
+          gasto.data.month == orcamento.mes &&
+          gasto.data.year == orcamento.ano) {
+        total += gasto.valor;
+      }
     }
 
     return total;
@@ -184,10 +178,9 @@ class ControleFinanceiro {
     DateTime hoje = DateTime.now();
 
     for (Orcamento orcamento in orcamentos) {
-      if(orcamento.mes == hoje.month &&
-         orcamento.ano == hoje.year) {
-          return orcamento;
-         }
+      if (orcamento.mes == hoje.month && orcamento.ano == hoje.year) {
+        return orcamento;
+      }
     }
 
     return null;
