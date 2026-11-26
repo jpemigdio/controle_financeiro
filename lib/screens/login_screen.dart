@@ -222,7 +222,7 @@ Widget build(BuildContext context) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const AppShell(),
+                                      builder: (context) => const CadastroScreen(),
                                     ),
                                   );
                                 },
