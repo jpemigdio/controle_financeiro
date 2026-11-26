@@ -11,6 +11,7 @@ enum Filtro { todos, receitas, despesas }
 
 //formator de moeda, seguindo regra brasileira: ponto no milhar e virgula nos centavos
 final _formatoMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+// ignore: unused_element
 final _formatoData = DateFormat('dd/MM/yyyy');
 
 class TelaTransacoes extends StatefulWidget {
